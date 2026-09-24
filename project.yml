@@ -1,0 +1,50 @@
+name: VSport
+options:
+  bundleIdPrefix: vn.mike.vsport
+  deploymentTarget:
+    tvOS: "17.0"
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+
+targets:
+  VSportTV:
+    type: application
+    platform: tvOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources
+    settings:
+      base:
+        PRODUCT_NAME: "VSportTV"
+        PRODUCT_BUNDLE_IDENTIFIER: "vn.mike.vsport.tv"
+        TARGETED_DEVICE_FAMILY: "3"
+        INFOPLIST_FILE: "Sources/Info.plist"
+        ASSETCATALOG_COMPILER_APPICON_NAME: "App Icon & Top Shelf Image"
+        CODE_SIGNING_ALLOWED: "NO"
+        CODE_SIGNING_REQUIRED: "NO"
+        CODE_SIGN_IDENTITY: ""
+        DEVELOPMENT_TEAM: ""
+        ENABLE_BITCODE: "NO"
+        GENERATE_INFOPLIST_FILE: "NO"
+
+  VSportiOS:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources
+    settings:
+      base:
+        PRODUCT_NAME: "VSport"
+        PRODUCT_BUNDLE_IDENTIFIER: "vn.mike.vsport.ios"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        INFOPLIST_FILE: "Sources/Info.plist"
+        ASSETCATALOG_COMPILER_APPICON_NAME: "AppIcon"
+        CODE_SIGNING_ALLOWED: "NO"
+        CODE_SIGNING_REQUIRED: "NO"
+        CODE_SIGN_IDENTITY: ""
+        DEVELOPMENT_TEAM: ""
+        ENABLE_BITCODE: "NO"
+        GENERATE_INFOPLIST_FILE: "NO"

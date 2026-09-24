@@ -1,0 +1,101 @@
+name: Build Apple TV & iOS (iPhone, iPad) IPA
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-ipa:
+    runs-on: macos-14
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          ls -ld /Applications/Xcode*
+          if [ -d "/Applications/Xcode_16.2.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.2.app
+          elif [ -d "/Applications/Xcode_16.1.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.1.app
+          elif [ -d "/Applications/Xcode_16.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.0.app
+          elif [ -d "/Applications/Xcode_16.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.app
+          else
+            sudo xcode-select -s /Applications/Xcode.app
+          fi
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Build & Archive Apple TV App (tvOS)
+        run: |
+          xcodebuild archive \
+            -project VSport.xcodeproj \
+            -scheme VSportTV \
+            -destination "generic/platform=tvOS" \
+            -archivePath build/VSportTV.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+      - name: Build & Archive iPhone & iPad App (iOS)
+        run: |
+          xcodebuild archive \
+            -project VSport.xcodeproj \
+            -scheme VSportiOS \
+            -destination "generic/platform=iOS" \
+            -archivePath build/VSport-iOS.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+      - name: Package Packages into IPAs
+        run: |
+          mkdir -p build/tvOS/Payload
+          cp -R build/VSportTV.xcarchive/Products/Applications/VSportTV.app build/tvOS/Payload/
+          cp Sources/AppIcon*.png build/tvOS/Payload/VSportTV.app/ || true
+          cp Sources/Icon*.png build/tvOS/Payload/VSportTV.app/ || true
+          cd build/tvOS && zip -r -q ../VSportTV.ipa Payload && cd ../..
+
+          mkdir -p build/iOS/Payload
+          cp -R build/VSport-iOS.xcarchive/Products/Applications/VSport.app build/iOS/Payload/
+          cp Sources/AppIcon*.png build/iOS/Payload/VSport.app/ || true
+          cp Sources/Icon*.png build/iOS/Payload/VSport.app/ || true
+          cd build/iOS && zip -r -q ../VSport-iOS.ipa Payload && cd ../..
+
+          ls -lh build/*.ipa
+
+      - name: Upload Apple TV IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: VSportTV-AppleTV-IPA
+          path: build/VSportTV.ipa
+          if-no-files-found: error
+
+      - name: Upload iPhone & iPad IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: VSport-iOS-iPhone-iPad-IPA
+          path: build/VSport-iOS.ipa
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="v1.0.0-${{ github.run_number }}"
+          gh release create "$TAG_NAME" build/VSportTV.ipa build/VSport-iOS.ipa \
+            --title "VSport TV & iOS (Apple TV & iOS) - v1.0.0 Build #${{ github.run_number }}" \
+            --notes "Bản phát hành đầu tiên của VSport: Ứng dụng xem trực tiếp thể thao Full HD và 4K cho Apple TV (tvOS) và iOS (iPhone/iPad). Nguồn mặc định miễn phí https://sports.highfly.to/manifest.json (đầy đủ đến 1080p FHD 50 FPS), hỗ trợ người dùng tự điền link Premium cá nhân dạng JSON/Manifest (BYOK), tự động đồng bộ qua iCloud, tích hợp Native AVPlayer cực mượt kèm HUD Signal Pill thời gian thực."
