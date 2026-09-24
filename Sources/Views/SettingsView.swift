@@ -57,13 +57,16 @@ public struct SettingsView: View {
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         
+                        #if !os(tvOS)
                         TextField("https://premium.highfly.to/.../manifest.json", text: $inputURL)
                             .textFieldStyle(.roundedBorder)
                             .autocorrectionDisabled()
-                            #if !os(tvOS)
                             .textInputAutocapitalization(.never)
                             .keyboardType(.URL)
-                            #endif
+                        #else
+                        TextField("https://premium.highfly.to/.../manifest.json", text: $inputURL)
+                            .autocorrectionDisabled()
+                        #endif
                         
                         HStack(spacing: 12) {
                             Button {
